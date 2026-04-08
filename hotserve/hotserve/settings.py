@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY
 # ─────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production-hotserve-2024')
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG=False
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # ─────────────────────────────────────────────
@@ -90,15 +90,12 @@ ASGI_APPLICATION = 'hotserve.asgi.application'
 # ─────────────────────────────────────────────
 # DATABASE
 # ─────────────────────────────────────────────
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='hotserve_db'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='daniya'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL')
+    )
 }
 
 # SQLite fallback for quick local dev (comment out postgres above and use this)
