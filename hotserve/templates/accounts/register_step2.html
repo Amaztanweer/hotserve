@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Verify Email{% endblock %}
+{% block extra_css %}
+<style>
+  .auth-wrap { min-height:calc(100vh - 60px); display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+  .auth-card { width:100%; max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:40px; }
+  .auth-logo { text-align:center; margin-bottom:28px; }
+  .auth-logo-text { font-size:28px; font-weight:800; background:linear-gradient(135deg,#FF4500,#FF8C00,#FFD700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .step-indicator { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:28px; }
+  .step-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:700; }
+  .step-dot.done { background:var(--green); color:#fff; }
+  .step-dot.active { background:var(--fire); color:#fff; }
+  .step-dot.inactive { background:var(--dark3); color:var(--muted); border:1px solid var(--border); }
+  .step-line { width:32px; height:1px; background:var(--border); }
+  .otp-inputs { display:flex; gap:10px; justify-content:center; margin:24px 0; }
+  .otp-box {
+    width:52px; height:60px; text-align:center;
+    background:var(--dark3); border:2px solid var(--border); border-radius:12px;
+    color:var(--text); font-size:24px; font-weight:800; font-family:var(--font-mono);
+    outline:none; transition:border-color .15s;
+  }
+  .otp-box:focus { border-color:var(--fire); }
+  .email-chip { background:var(--dark3); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-family:var(--font-mono); font-size:12px; color:var(--blue); display:inline-block; margin-bottom:20px; }
+  .resend-link { font-family:var(--font-mono); font-size:12px; color:var(--muted); text-align:center; margin-top:16px; }
+  .resend-link a { color:var(--fire-bright); text-decoration:none; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div style="font-size:32px;">🔥</div>
+      <div class="auth-logo-text">Verify Email</div>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot done">✓</div>
+      <div class="step-line"></div>
+      <div class="step-dot active">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot inactive">3</div>
+    </div>
+
+    <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Enter the OTP</div>
+    <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-bottom:12px;">6-digit code sent to:</div>
+    <div class="email-chip">📧 {{ email }}</div>
+
+    <form method="post" id="otpForm">
+      {% csrf_token %}
+      <div class="otp-inputs">
+        <input type="text" class="otp-box" maxlength="1" data-index="0" inputmode="numeric">
+        <input type="text" class="otp-box" maxlength="1" data-index="1" inputmode="numeric">
+        <input type="text" class="otp-box" maxlength="1" data-index="2" inputmode="numeric">
+        <input type="text" class="otp-box" maxlength="1" data-index="3" inputmode="numeric">
+        <input type="text" class="otp-box" maxlength="1" data-index="4" inputmode="numeric">
+        <input type="text" class="otp-box" maxlength="1" data-index="5" inputmode="numeric">
+      </div>
+      <input type="hidden" name="otp" id="otpHidden">
+      <button type="submit" class="btn btn-fire btn-full" id="verifyBtn">Verify OTP →</button>
+    </form>
+
+    <div class="resend-link">
+      Didn't receive it? <a href="{% url 'accounts:resend_otp' %}">Resend OTP</a>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+const boxes = document.querySelectorAll('.otp-box');
+boxes[0].focus();
+
+boxes.forEach((box, i) => {
+  box.addEventListener('input', () => {
+    if (box.value && i < 5) boxes[i + 1].focus();
+    updateHidden();
+  });
+  box.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !box.value && i > 0) boxes[i - 1].focus();
+  });
+  box.addEventListener('paste', (e) => {
+    const paste = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    paste.split('').forEach((char, j) => { if (boxes[j]) boxes[j].value = char; });
+    if (boxes[5]) boxes[5].focus();
+    updateHidden();
+    e.preventDefault();
+  });
+});
+
+function updateHidden() {
+  document.getElementById('otpHidden').value = [...boxes].map(b => b.value).join('');
+}
+
+document.getElementById('otpForm').addEventListener('submit', () => updateHidden());
+</script>
+{% endblock %}
+{% endblock %}

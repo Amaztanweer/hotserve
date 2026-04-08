@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+
+{% block extra_css %}
+<style>
+  .auth-wrap { min-height: calc(100vh - 60px); display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+  .auth-card { width: 100%; max-width: 480px; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 40px; }
+  .auth-logo { text-align: center; margin-bottom: 28px; }
+  .auth-logo-text { font-size: 28px; font-weight: 800; background: linear-gradient(135deg, #FF4500, #FF8C00, #FFD700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .auth-footer { text-align: center; margin-top: 20px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .auth-footer a { color: var(--fire-bright); text-decoration: none; }
+  .domain-note { background: rgba(74,158,255,0.08); border: 1px solid rgba(74,158,255,0.2); border-radius: 8px; padding: 10px 14px; font-family: var(--font-mono); font-size: 11px; color: var(--blue); margin-bottom: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div style="font-size:32px;">🔥</div>
+      <div class="auth-logo-text">Join HotServe</div>
+    </div>
+
+    <div class="domain-note">
+      ℹ️ Only college email addresses are accepted. Use your official college email.
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="full_name" class="form-control" placeholder="Your full name" required value="{{ form.full_name.value|default:'' }}">
+          {% if form.full_name.errors %}<div class="form-error">{{ form.full_name.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="text" name="phone" class="form-control" placeholder="9876543210" value="{{ form.phone.value|default:'' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">College Email</label>
+        <input type="email" name="email" class="form-control" placeholder="your@college.edu" required value="{{ form.email.value|default:'' }}">
+        {% if form.email.errors %}<div class="form-error">{{ form.email.errors.0 }}</div>{% endif %}
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Hostel Name</label>
+          <input type="text" name="hostel_name" class="form-control" placeholder="Block A Hostel" value="{{ form.hostel_name.value|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Room Number</label>
+          <input type="text" name="room_number" class="form-control" placeholder="A-204" value="{{ form.room_number.value|default:'' }}">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" placeholder="Min 8 chars" required>
+          {% if form.password.errors %}<div class="form-error">{{ form.password.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input type="password" name="confirm_password" class="form-control" placeholder="Repeat" required>
+        </div>
+      </div>
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-error">❌ {{ form.non_field_errors.0 }}</div>
+      {% endif %}
+
+      <button type="submit" class="btn btn-fire btn-full">Create Account 🔥</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="{% url 'accounts:login' %}">Sign in →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

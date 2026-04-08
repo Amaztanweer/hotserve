@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Review — {{ runner.user.full_name }}{% endblock %}
+{% block content %}
+<a href="{% url 'admin_panel:runner_approvals' %}" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-family:var(--font-mono);font-size:12px;margin-bottom:20px;">← Back to Approvals</a>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;">
+  <div>
+    <div class="card" style="margin-bottom:20px;">
+      <div style="font-size:18px;font-weight:700;margin-bottom:16px;">{{ runner.user.full_name }}</div>
+      <div class="grid-2" style="gap:12px;">
+        <div><div class="form-label">Email</div><div style="font-family:var(--font-mono);font-size:13px;">{{ runner.user.email }}</div></div>
+        <div><div class="form-label">Phone</div><div style="font-family:var(--font-mono);font-size:13px;">{{ runner.user.phone|default:"—" }}</div></div>
+        <div><div class="form-label">Roll Number</div><div style="font-family:var(--font-mono);font-size:13px;">{{ runner.roll_number }}</div></div>
+        <div><div class="form-label">Branch / Year</div><div style="font-family:var(--font-mono);font-size:13px;">{{ runner.branch }} · Year {{ runner.year_of_study }}</div></div>
+        <div><div class="form-label">Hostel</div><div style="font-family:var(--font-mono);font-size:13px;">{{ runner.user.hostel_name }} · {{ runner.user.room_number }}</div></div>
+        <div><div class="form-label">UPI ID</div><div style="font-family:var(--font-mono);font-size:13px;">{{ runner.upi_id|default:"—" }}</div></div>
+      </div>
+    </div>
+
+    <!-- Verification documents -->
+    <div class="section-title">Verification Documents</div>
+    <div class="grid-2" style="margin-bottom:20px;">
+      {% if runner.college_portal_screenshot %}
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:12px;font-family:var(--font-mono);font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);">COLLEGE PORTAL SCREENSHOT</div>
+        <img src="{{ runner.college_portal_screenshot.url }}" style="width:100%;max-height:300px;object-fit:contain;padding:10px;">
+      </div>
+      {% endif %}
+      {% if runner.selfie_with_note %}
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div style="padding:12px;font-family:var(--font-mono);font-size:10px;color:var(--muted);border-bottom:1px solid var(--border);">SELFIE WITH NOTE</div>
+        <img src="{{ runner.selfie_with_note.url }}" style="width:100%;max-height:300px;object-fit:contain;padding:10px;">
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Task history -->
+    {% if task_history %}
+    <div class="section-title">Task History</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Task</th><th>Status</th><th>Earned</th><th>Date</th></tr></thead>
+        <tbody>
+          {% for task in task_history %}
+          <tr>
+            <td style="font-size:13px;">{{ task.title|truncatechars:40 }}</td>
+            <td><span class="tag tag-{% if task.status == 'confirmed' %}green{% else %}gray{% endif %}">{{ task.status }}</span></td>
+            <td style="font-family:var(--font-mono);color:var(--green);">₹{{ task.runner_payout|floatformat:0 }}</td>
+            <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted);">{{ task.created_at|date:"d M Y" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Action panel -->
+  <div>
+    <div class="card card-fire">
+      <div style="font-weight:700;font-size:16px;margin-bottom:16px;">Admin Actions</div>
+      <div style="margin-bottom:12px;">
+        <span style="font-family:var(--font-mono);font-size:10px;color:var(--muted);">Current Status:</span>
+        <span class="tag tag-{% if runner.verification_status == 'pending' %}yellow{% elif runner.verification_status == 'approved' %}green{% elif runner.verification_status == 'banned' %}red{% else %}gray{% endif %}" style="margin-left:6px;">{{ runner.verification_status|upper }}</span>
+      </div>
+
+      {% if runner.verification_status == 'pending' %}
+      <form method="post" style="margin-bottom:10px;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="approve">
+        <button type="submit" class="btn btn-green btn-full" onclick="return confirm('Approve this runner?')">✅ Approve Runner</button>
+      </form>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="reject">
+        <div class="form-group">
+          <label class="form-label">Rejection Reason</label>
+          <textarea name="rejection_reason" class="form-control" rows="2" placeholder="Why is this rejected?" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-red btn-full">❌ Reject</button>
+      </form>
+
+      {% elif runner.verification_status == 'approved' %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="ban">
+        <button type="submit" class="btn btn-red btn-full" onclick="return confirm('Permanently ban this runner? This cannot be undone.')">🚫 Permanently Ban</button>
+      </form>
+
+      {% elif runner.verification_status == 'suspended' %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="unsuspend">
+        <button type="submit" class="btn btn-green btn-full">↩ Unsuspend Runner</button>
+      </form>
+      {% endif %}
+    </div>
+
+    {% if runner.rejection_reason %}
+    <div class="card" style="margin-top:16px; border-color:rgba(255,59,59,0.3);">
+      <div class="form-label">Rejection Reason</div>
+      <p style="font-family:var(--font-mono);font-size:12px;color:var(--muted);">{{ runner.rejection_reason }}</p>
+    </div>
+    {% endif %}
+
+    <div class="card" style="margin-top:16px;">
+      <div class="form-label">Complaints</div>
+      <div style="font-size:24px;font-weight:800;color:{% if runner.complaint_count >= 2 %}var(--red){% else %}var(--text){% endif %};">
+        {{ runner.complaint_count }} / 3
+      </div>
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:4px;">Auto-suspend at 3 complaints</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

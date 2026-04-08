@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Forgot Password{% endblock %}
+{% block extra_css %}
+<style>
+  .auth-wrap { min-height:calc(100vh - 60px); display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+  .auth-card { width:100%; max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:40px; }
+  .auth-logo { text-align:center; margin-bottom:28px; }
+  .auth-footer { text-align:center; margin-top:20px; font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+  .auth-footer a { color:var(--fire-bright); text-decoration:none; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div style="font-size:32px;">🔑</div>
+      <div style="font-size:22px; font-weight:800; margin-top:8px;">Forgot Password?</div>
+    </div>
+
+    <div style="font-family:var(--font-mono); font-size:12px; color:var(--muted); margin-bottom:24px; line-height:1.7;">
+      Enter your registered email. We'll send a 6-digit OTP to reset your password.
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" name="email" class="form-control" placeholder="your@email.com" required autofocus>
+      </div>
+      <button type="submit" class="btn btn-fire btn-full">Send Reset OTP →</button>
+    </form>
+
+    <div class="auth-footer">
+      Remembered it? <a href="{% url 'accounts:login' %}">Back to login →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

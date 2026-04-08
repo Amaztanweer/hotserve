@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Post a Task{% endblock %}
+{% block content %}
+<div style="max-width: 680px; margin: 0 auto;">
+  <div class="page-header">
+    <div class="page-title">Post a Task 🔥</div>
+    <div class="page-sub">Describe what you need — a runner will pick it up</div>
+  </div>
+
+  <!-- Wallet check -->
+  {% if wallet %}
+  <div style="background:rgba(0,200,150,0.08); border:1px solid rgba(0,200,150,0.2); border-radius:10px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+    <span style="font-family:var(--font-mono); font-size:12px; color:var(--muted);">💰 Wallet Balance</span>
+    <span style="font-size:18px; font-weight:800; color:var(--green);">₹{{ wallet.balance|floatformat:2 }}</span>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select name="category" class="form-control" required>
+          <option value="">Select a category...</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.icon }} {{ cat.name }} (₹{{ cat.base_reward_min }}–{{ cat.base_reward_max }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Task Title</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. Get me a burger from Canteen B" required maxlength="200">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="3" placeholder="Specific instructions, item details, size, quantity..." required></textarea>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Pickup Location</label>
+          <input type="text" name="pickup_location" class="form-control" placeholder="Main Canteen, Block B" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Delivery Location</label>
+          <input type="text" name="delivery_location" class="form-control" placeholder="Block A, Room 204" required>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Reward for Runner (₹)</label>
+          <input type="number" name="reward_amount" class="form-control" placeholder="e.g. 30" min="5" step="5" required>
+          <div class="form-hint">Platform fee: 10% · Runner gets 90%</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Delivery Type</label>
+          <select name="delivery_type" class="form-control">
+            <option value="standard">Standard</option>
+            <option value="urgent">🚨 Urgent (2× reward)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+          <input type="checkbox" name="requires_purchase" id="requiresPurchase" style="width:16px; height:16px;">
+          <span style="font-family:var(--font-mono); font-size:12px; color:var(--muted);">Runner needs to purchase something (pre-purchase task)</span>
+        </label>
+      </div>
+
+      <div class="form-group" id="purchaseAmountField" style="display:none;">
+        <label class="form-label">Purchase Amount (₹)</label>
+        <input type="number" name="purchase_amount" class="form-control" placeholder="Amount runner needs to spend" min="0" step="1">
+        <div class="form-hint">This will be added to the escrow lock</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Task Image (optional)</label>
+        <input type="file" name="task_image" accept="image/*" class="form-control">
+        <div class="form-hint">Photo of item, menu screenshot, etc.</div>
+      </div>
+
+      <hr class="divider">
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-family:var(--font-mono); font-size:12px; color:var(--muted);">Funds locked in escrow until delivery confirmed</div>
+        <button type="submit" class="btn btn-fire">Post Task 🔥</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.getElementById('requiresPurchase').addEventListener('change', function() {
+  document.getElementById('purchaseAmountField').style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}
+{% endblock %}

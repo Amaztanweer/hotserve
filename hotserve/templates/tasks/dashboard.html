@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dash-hero {
+    background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+    padding: 28px 32px; margin-bottom: 28px;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  }
+  .dash-greeting { font-size: 26px; font-weight: 800; }
+  .dash-greeting span { background: linear-gradient(135deg, #FF4500, #FF8C00); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .dash-meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .task-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; transition: border-color .15s, transform .1s;
+    text-decoration: none; display: block;
+  }
+  .task-card:hover { border-color: #444; transform: translateY(-2px); }
+  .task-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .task-card-title { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .task-card-cat { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .task-reward { font-size: 18px; font-weight: 800; color: var(--green); white-space: nowrap; }
+  .task-meta { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .task-location { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+  .tasks-list { display: flex; flex-direction: column; gap: 12px; }
+  .runner-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 28px; }
+  .runner-stat { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .runner-stat-val { font-size: 24px; font-weight: 800; color: var(--fire-bright); }
+  .runner-stat-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+  .trust-bar {
+    background: var(--dark3); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 20px; display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
+  }
+  .trust-level-icon { font-size: 28px; }
+  .trust-level-name { font-weight: 700; font-size: 15px; }
+  .trust-level-sub { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .online-toggle {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono); font-size: 12px; color: var(--muted);
+  }
+  .toggle-switch { position: relative; width: 44px; height: 24px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: var(--border); border-radius: 12px;
+    cursor: pointer; transition: .2s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 18px; height: 18px; left: 3px; bottom: 3px;
+    background: #fff; border-radius: 50%; transition: .2s;
+  }
+  input:checked + .toggle-slider { background: var(--green); }
+  input:checked + .toggle-slider::before { transform: translateX(20px); }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="dash-hero">
+  <div>
+    <div class="dash-greeting">
+      Hey, <span>{{ request.user.display_name }}</span> 👋
+    </div>
+    <div class="dash-meta">
+      {% if mode == 'runner' %}
+        🏃 Runner Mode — Ready to earn
+      {% else %}
+        📋 Requester Mode — Post tasks, get things done
+      {% endif %}
+    </div>
+  </div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    {% if mode == 'requester' %}
+      <div class="wallet-chip" style="font-size:15px; padding: 10px 18px;">
+        💰 ₹{{ wallet.balance|floatformat:2|default:"0.00" }}
+      </div>
+      <a href="{% url 'tasks:post_task' %}" class="btn btn-fire">+ Post Task</a>
+      <a href="{% url 'payments:wallet' %}" class="btn btn-outline btn-sm">Top Up</a>
+    {% else %}
+      <a href="{% url 'tasks:task_feed' %}" class="btn btn-fire">Browse Tasks</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if mode == 'runner' %}
+<!-- ── RUNNER DASHBOARD ── -->
+
+  {% if runner_profile %}
+  <!-- Trust level bar -->
+  <div class="trust-bar">
+    <span class="trust-level-icon">
+      {% if runner_profile.trust_level == 'elite' %}🏆{% elif runner_profile.trust_level == 'trusted' %}⭐{% else %}🆕{% endif %}
+    </span>
+    <div>
+      <div class="trust-level-name">{{ runner_profile.get_trust_level_display }}</div>
+      <div class="trust-level-sub">{{ runner_profile.total_tasks_completed }} tasks · {{ runner_profile.average_rating|floatformat:1 }}⭐ avg rating</div>
+    </div>
+    <div class="online-toggle">
+      <span>Available</span>
+      <form method="post" action="{% url 'api_accounts:toggle_availability' %}" style="display:inline;">
+        {% csrf_token %}
+        <label class="toggle-switch">
+          <input type="checkbox" onchange="this.form.submit()" {% if runner_profile.is_available %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </form>
+    </div>
+  </div>
+
+  <!-- Runner stats -->
+  <div class="runner-stats">
+    <div class="runner-stat">
+      <div class="runner-stat-val">{{ runner_profile.total_tasks_completed }}</div>
+      <div class="runner-stat-lbl">Tasks Done</div>
+    </div>
+    <div class="runner-stat">
+      <div class="runner-stat-val">₹{{ runner_profile.total_earnings|floatformat:0 }}</div>
+      <div class="runner-stat-lbl">Total Earned</div>
+    </div>
+    <div class="runner-stat">
+      <div class="runner-stat-val">{{ runner_profile.average_rating|floatformat:1 }}⭐</div>
+      <div class="runner-stat-lbl">Avg Rating</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Active tasks -->
+  {% if my_active_tasks %}
+  <div class="section-title">Active Tasks</div>
+  <div class="tasks-list" style="margin-bottom: 28px;">
+    {% for task in my_active_tasks %}
+    <a href="{% url 'tasks:task_detail' task.pk %}" class="task-card card-fire" style="border-left: 3px solid var(--fire);">
+      <div class="task-card-header">
+        <div>
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-cat">{{ task.category }} · #{{ task.task_number }}</div>
+        </div>
+        <div>
+          <div class="task-reward">₹{{ task.runner_payout|floatformat:0 }}</div>
+          <span class="tag tag-fire" style="margin-top:4px;">{{ task.get_status_display }}</span>
+        </div>
+      </div>
+      <div class="task-meta">
+        <span class="task-location">📦 {{ task.pickup_location }}</span>
+        <span class="task-location">→ 📍 {{ task.delivery_location }}</span>
+        <span class="task-location">Requester: {{ task.requester.display_name }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Open tasks preview -->
+  <div class="section-title">Open Tasks Near You</div>
+  {% if open_tasks %}
+  <div class="tasks-list">
+    {% for task in open_tasks %}
+    <a href="{% url 'tasks:task_detail' task.pk %}" class="task-card">
+      <div class="task-card-header">
+        <div>
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-cat">{{ task.category }} · {{ task.delivery_type }}</div>
+        </div>
+        <div class="task-reward">₹{{ task.reward_amount|floatformat:0 }}</div>
+      </div>
+      <div class="task-meta">
+        <span class="task-location">📦 {{ task.pickup_location }}</span>
+        <span class="task-location">→ 📍 {{ task.delivery_location }}</span>
+        <span class="tag tag-green">OPEN</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  <div style="text-align:center; margin-top:16px;">
+    <a href="{% url 'tasks:task_feed' %}" class="btn btn-outline">View All Open Tasks →</a>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon">📋</span>
+    <div class="empty-title">No open tasks right now</div>
+    <div class="empty-sub">Check back soon — new tasks appear every few minutes</div>
+  </div>
+  {% endif %}
+
+{% else %}
+<!-- ── REQUESTER DASHBOARD ── -->
+
+  <!-- Active tasks -->
+  {% if active_tasks %}
+  <div class="section-title">Your Active Tasks</div>
+  <div class="tasks-list" style="margin-bottom: 28px;">
+    {% for task in active_tasks %}
+    <a href="{% url 'tasks:task_detail' task.pk %}" class="task-card">
+      <div class="task-card-header">
+        <div>
+          <div class="task-card-title">{{ task.title }}</div>
+          <div class="task-card-cat">{{ task.category }} · #{{ task.task_number }}</div>
+        </div>
+        <div>
+          <div class="task-reward">₹{{ task.reward_amount|floatformat:0 }}</div>
+          <div style="margin-top:4px;">
+            {% if task.status == 'open' %}     <span class="tag tag-green">OPEN</span>
+            {% elif task.status == 'accepted' %}<span class="tag tag-blue">ACCEPTED</span>
+            {% elif task.status == 'picked_up' %}<span class="tag tag-yellow">PICKED UP</span>
+            {% elif task.status == 'delivered' %}<span class="tag tag-fire">DELIVERED</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="task-meta">
+        {% if task.runner %}
+          <span class="task-location">🏃 Runner: {{ task.runner.display_name }}</span>
+        {% else %}
+          <span class="task-location">⏳ Waiting for runner...</span>
+        {% endif %}
+        <span class="task-location">→ 📍 {{ task.delivery_location }}</span>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Quick post -->
+  {% if not active_tasks %}
+  <div class="card" style="text-align:center; padding: 40px; margin-bottom: 28px;">
+    <div style="font-size:40px; margin-bottom:12px;">🔥</div>
+    <div style="font-size:20px; font-weight:700; margin-bottom:8px;">Post Your First Task</div>
+    <div style="font-family:var(--font-mono); font-size:12px; color:var(--muted); margin-bottom:20px;">Get food, stationery, parcels delivered to your room</div>
+    <a href="{% url 'tasks:post_task' %}" class="btn btn-fire">Post a Task Now</a>
+  </div>
+  {% endif %}
+
+  <!-- Category quick links -->
+  <div class="section-title">Task Categories</div>
+  <div class="grid-4" style="margin-bottom:28px;">
+    {% for cat in categories %}
+    <a href="{% url 'tasks:post_task' %}?category={{ cat.id }}" class="task-card" style="text-align:center; padding:16px;">
+      <div style="font-size:28px; margin-bottom:8px;">{{ cat.icon }}</div>
+      <div style="font-size:13px; font-weight:700;">{{ cat.name }}</div>
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--green); margin-top:4px;">₹{{ cat.base_reward_min }}–{{ cat.base_reward_max }}</div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <!-- Past tasks -->
+  {% if past_tasks %}
+  <div class="section-title">Recent History</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Task</th><th>Status</th><th>Runner</th><th>Amount</th><th>Date</th>
+      </tr></thead>
+      <tbody>
+        {% for task in past_tasks %}
+        <tr>
+          <td>
+            <a href="{% url 'tasks:task_detail' task.pk %}" style="color:var(--text); text-decoration:none; font-weight:600;">
+              {{ task.title|truncatechars:40 }}
+            </a>
+            <div style="font-family:var(--font-mono); font-size:10px; color:var(--muted);">#{{ task.task_number }}</div>
+          </td>
+          <td>
+            {% if task.status == 'confirmed' %}<span class="tag tag-green">✅ Done</span>
+            {% elif task.status == 'cancelled' %}<span class="tag tag-gray">Cancelled</span>
+            {% endif %}
+          </td>
+          <td>{{ task.runner.display_name|default:"—" }}</td>
+          <td style="font-family:var(--font-mono); color:var(--green);">₹{{ task.reward_amount }}</td>
+          <td style="font-family:var(--font-mono); font-size:11px; color:var(--muted);">{{ task.created_at|date:"d M Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+{% endif %}
+{% endblock %}

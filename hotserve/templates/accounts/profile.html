@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div style="max-width:700px; margin:0 auto;">
+  <div class="page-header">
+    <div class="page-title">⚙️ My Profile</div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <!-- Wallet snapshot -->
+    <div class="card card-green" style="display:flex; flex-direction:column; gap:6px;">
+      <div style="font-family:var(--font-mono); font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase;">Wallet Balance</div>
+      <div style="font-size:36px; font-weight:800; color:var(--green);">₹{{ wallet.balance|floatformat:2|default:"0.00" }}</div>
+      <a href="{% url 'payments:wallet' %}" class="btn btn-outline btn-sm" style="align-self:flex-start; margin-top:6px;">Manage Wallet →</a>
+    </div>
+
+    <!-- Runner status -->
+    <div class="card">
+      <div style="font-family:var(--font-mono); font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:10px;">Runner Status</div>
+      {% if runner_profile %}
+        <span class="tag tag-{% if runner_profile.verification_status == 'approved' %}green{% elif runner_profile.verification_status == 'pending' %}yellow{% elif runner_profile.verification_status == 'banned' %}red{% else %}gray{% endif %}" style="font-size:13px;">
+          {{ runner_profile.get_verification_status_display }}
+        </span>
+        {% if runner_profile.is_approved %}
+          <div style="margin-top:10px; font-family:var(--font-mono); font-size:12px; color:var(--muted);">
+            {{ runner_profile.get_trust_level_display }}<br>
+            {{ runner_profile.total_tasks_completed }} tasks · {{ runner_profile.average_rating|floatformat:1 }}⭐
+          </div>
+          <a href="{% url 'accounts:switch_role' %}" class="btn btn-outline btn-sm" style="margin-top:10px;">
+            Switch to {% if request.user.is_runner %}Requester{% else %}Runner{% endif %} Mode
+          </a>
+        {% endif %}
+      {% else %}
+        <div style="font-family:var(--font-mono); font-size:12px; color:var(--muted); margin-bottom:12px;">Not a runner yet</div>
+        <a href="{% url 'accounts:apply_runner' %}" class="btn btn-fire btn-sm">Apply to be a Runner 🏃</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Edit profile form -->
+  <div class="card">
+    <div style="font-weight:700; font-size:16px; margin-bottom:20px;">Edit Profile</div>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="full_name" class="form-control" value="{{ form.full_name.value|default:'' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="text" name="phone" class="form-control" value="{{ form.phone.value|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hostel Name</label>
+          <input type="text" name="hostel_name" class="form-control" value="{{ form.hostel_name.value|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Room Number</label>
+          <input type="text" name="room_number" class="form-control" value="{{ form.room_number.value|default:'' }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Profile Photo</label>
+        {% if request.user.profile_photo %}
+          <div style="margin-bottom:8px;">
+            <img src="{{ request.user.profile_photo.url }}" style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
+          </div>
+        {% endif %}
+        <input type="file" name="profile_photo" accept="image/*" class="form-control">
+      </div>
+      <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-bottom:16px;">
+        Email: {{ request.user.email }} (cannot be changed)
+      </div>
+      <button type="submit" class="btn btn-fire">Save Changes</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

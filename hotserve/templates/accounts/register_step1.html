@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block extra_css %}
+<style>
+  .auth-wrap { min-height:calc(100vh - 60px); display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+  .auth-card { width:100%; max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:40px; }
+  .auth-logo { text-align:center; margin-bottom:28px; }
+  .auth-logo-text { font-size:28px; font-weight:800; background:linear-gradient(135deg,#FF4500,#FF8C00,#FFD700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .auth-footer { text-align:center; margin-top:20px; font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+  .auth-footer a { color:var(--fire-bright); text-decoration:none; }
+  .step-indicator { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:28px; }
+  .step-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:700; }
+  .step-dot.active { background:var(--fire); color:#fff; }
+  .step-dot.inactive { background:var(--dark3); color:var(--muted); border:1px solid var(--border); }
+  .step-line { width:32px; height:1px; background:var(--border); }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div style="font-size:32px;">🔥</div>
+      <div class="auth-logo-text">Join HotServe</div>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot active">1</div>
+      <div class="step-line"></div>
+      <div class="step-dot inactive">2</div>
+      <div class="step-line"></div>
+      <div class="step-dot inactive">3</div>
+    </div>
+
+    <div style="font-weight:700; font-size:16px; margin-bottom:6px;">Enter your details</div>
+    <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-bottom:24px;">We'll send a 6-digit OTP to verify your email</div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="full_name" class="form-control" placeholder="Your full name" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <input type="email" name="email" class="form-control" placeholder="your@email.com" required>
+      </div>
+      <button type="submit" class="btn btn-fire btn-full">Send OTP →</button>
+    </form>
+
+    <div class="auth-footer" style="margin-top:16px;">
+      Already have an account? <a href="{% url 'accounts:login' %}">Sign in →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

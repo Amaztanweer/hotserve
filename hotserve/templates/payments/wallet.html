@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Wallet{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title">💰 My Wallet</div>
+  <div class="page-sub">Manage your HotServe balance</div>
+</div>
+
+<div class="grid-2" style="margin-bottom:28px;">
+  <!-- Balance card -->
+  <div class="card card-green" style="padding:32px;">
+    <div style="font-family:var(--font-mono); font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;">Available Balance</div>
+    <div style="font-size:48px; font-weight:800; color:var(--green);">₹{{ wallet.balance|floatformat:2 }}</div>
+    <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-top:10px;">Max: ₹{{ max_balance }}</div>
+  </div>
+
+  <!-- Top up -->
+  <div class="card">
+    <div style="font-weight:700; font-size:16px; margin-bottom:16px;">Top Up Wallet</div>
+    <form method="post" action="{% url 'payments:initiate_topup' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <input type="number" name="amount" class="form-control" placeholder="Min ₹{{ min_topup }}" min="{{ min_topup }}" step="10" required>
+      </div>
+
+      <!-- Quick amounts -->
+      <div style="display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap;">
+        {% for amt in quick_amounts %}
+        <button type="button" class="btn btn-outline btn-sm quick-amt" data-amount="{{ amt }}">₹{{ amt }}</button>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn btn-fire btn-full">Add Money via Razorpay</button>
+    </form>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="grid-3" style="margin-bottom:28px;">
+  <div class="stat-card blue">
+    <div class="stat-label">Total Topped Up</div>
+    <div class="stat-value blue">₹{{ wallet.total_topped_up|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card fire">
+    <div class="stat-label">Total Spent</div>
+    <div class="stat-value fire">₹{{ wallet.total_spent|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Transactions</div>
+    <div class="stat-value green">{{ transactions|length }}</div>
+  </div>
+</div>
+
+<!-- Transaction history -->
+<div class="section-title">Transaction History</div>
+{% if transactions %}
+<div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>Type</th><th>Description</th><th>Amount</th><th>Balance After</th><th>Date</th>
+    </tr></thead>
+    <tbody>
+      {% for txn in transactions %}
+      <tr>
+        <td>
+          {% if txn.is_credit %}
+            <span class="tag tag-green">+ Credit</span>
+          {% else %}
+            <span class="tag tag-red">- Debit</span>
+          {% endif %}
+        </td>
+        <td style="font-family:var(--font-mono); font-size:12px;">{{ txn.description }}</td>
+        <td style="font-weight:700; {% if txn.is_credit %}color:var(--green){% else %}color:var(--red){% endif %};">
+          {% if txn.is_credit %}+{% else %}-{% endif %}₹{{ txn.amount }}
+        </td>
+        <td style="font-family:var(--font-mono); color:var(--muted);">₹{{ txn.balance_after }}</td>
+        <td style="font-family:var(--font-mono); font-size:11px; color:var(--muted);">{{ txn.created_at|date:"d M, g:i a" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <span class="empty-icon">💳</span>
+  <div class="empty-title">No transactions yet</div>
+  <div class="empty-sub">Top up your wallet to get started</div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('.quick-amt').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelector('input[name="amount"]').value = this.dataset.amount;
+    document.querySelectorAll('.quick-amt').forEach(b => b.classList.remove('btn-fire'));
+    this.classList.add('btn-fire');
+  });
+});
+</script>
+{% endblock %}
+{% endblock %}

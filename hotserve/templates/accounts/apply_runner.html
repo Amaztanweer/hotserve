@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Apply to be a Runner{% endblock %}
+{% block content %}
+<div style="max-width:640px; margin:0 auto;">
+  <div class="page-header">
+    <div class="page-title">🏃 Apply to be a Runner</div>
+    <div class="page-sub">Earn money delivering tasks on campus</div>
+  </div>
+
+  <!-- How it works -->
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px;">
+
+    {% for step in steps %}
+    <div
+      style="background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center;">
+
+      <div style="font-size:24px; margin-bottom:6px;">
+        {{ step.icon }}
+      </div>
+
+      <div style="font-family:var(--font-mono); font-size:10px; color:var(--muted);">
+        Step {{ step.num }}
+      </div>
+
+      <div style="font-weight:700; font-size:12px; margin-top:2px;">
+        {{ step.label }}
+      </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <div class="card">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="section-title">College Info</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Roll Number</label>
+          <input type="text" name="roll_number" class="form-control" placeholder="e.g. 21CS045" required>
+          <div class="form-hint">One roll number = one account, forever</div>
+          {% if form.roll_number.errors %}<div class="form-error">{{ form.roll_number.errors.0 }}</div>{% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Branch</label>
+          <input type="text" name="branch" class="form-control" placeholder="e.g. Computer Science" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Year of Study</label>
+          <select name="year_of_study" class="form-control" required>
+            {% for i in "123456" %}
+              <option value="{{ forloop.counter }}">Year {{ forloop.counter }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">UPI ID (for payouts)</label>
+          <input type="text" name="upi_id" class="form-control" placeholder="yourname@upi">
+          <div class="form-hint">Where your earnings will be sent</div>
+        </div>
+      </div>
+
+      <div class="section-title">Verification Documents</div>
+
+      <div class="form-group">
+        <label class="form-label">College Portal Screenshot</label>
+        <input type="file" name="college_portal_screenshot" accept="image/*" class="form-control" required>
+        <div class="form-hint">Screenshot showing your name, roll no, photo, and college name</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Selfie with Verification Note</label>
+        <input type="file" name="selfie_with_note" accept="image/*" class="form-control" required>
+        <div class="form-hint">
+          Photo of yourself holding a handwritten note that says "HotServe Runner" and today's date
+        </div>
+      </div>
+
+      <div
+        style="background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.2); border-radius:10px; padding:14px; margin-bottom:20px; font-family:var(--font-mono); font-size:11px; color:var(--yellow); line-height:1.7;">
+        ⚠️ Admin will compare your portal photo with your selfie.<br>
+        False applications will result in a permanent ban.<br>
+        Review takes up to 24 hours.
+      </div>
+
+      <button type="submit" class="btn btn-fire btn-full">Submit Application 🚀</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

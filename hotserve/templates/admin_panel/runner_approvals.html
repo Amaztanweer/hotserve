@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Runner Approvals{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title">👮 Runner Approvals</div>
+  <div class="page-sub">Review and verify runner applications</div>
+</div>
+
+<!-- Status tabs -->
+<div style="display:flex; gap:6px; margin-bottom:24px; flex-wrap:wrap;">
+  <a href="?status=pending" class="btn btn-sm {% if status_filter == 'pending' %}btn-fire{% else %}btn-outline{% endif %}">
+    Pending ({{ counts.pending }})
+  </a>
+  <a href="?status=approved" class="btn btn-sm {% if status_filter == 'approved' %}btn-fire{% else %}btn-outline{% endif %}">
+    Approved ({{ counts.approved }})
+  </a>
+  <a href="?status=rejected" class="btn btn-sm {% if status_filter == 'rejected' %}btn-fire{% else %}btn-outline{% endif %}">
+    Rejected ({{ counts.rejected }})
+  </a>
+  <a href="?status=suspended" class="btn btn-sm {% if status_filter == 'suspended' %}btn-fire{% else %}btn-outline{% endif %}">
+    Suspended ({{ counts.suspended }})
+  </a>
+  <a href="?status=banned" class="btn btn-sm {% if status_filter == 'banned' %}btn-fire{% else %}btn-outline{% endif %}">
+    Banned ({{ counts.banned }})
+  </a>
+</div>
+
+{% if runners %}
+<div class="table-wrap">
+  <table>
+    <thead><tr>
+      <th>Applicant</th><th>Roll No.</th><th>Branch / Year</th><th>Applied</th><th>Status</th><th>Action</th>
+    </tr></thead>
+    <tbody>
+      {% for runner in runners %}
+      <tr>
+        <td>
+          <div style="font-weight:700;">{{ runner.user.full_name }}</div>
+          <div style="font-family:var(--font-mono); font-size:11px; color:var(--muted);">{{ runner.user.email }}</div>
+        </td>
+        <td><span class="tag tag-gray">{{ runner.roll_number }}</span></td>
+        <td style="font-family:var(--font-mono); font-size:12px;">{{ runner.branch }} · Year {{ runner.year_of_study }}</td>
+        <td style="font-family:var(--font-mono); font-size:11px; color:var(--muted);">{{ runner.applied_at|date:"d M Y" }}</td>
+        <td>
+          {% if runner.verification_status == 'pending' %}   <span class="tag tag-yellow">Pending</span>
+          {% elif runner.verification_status == 'approved' %}<span class="tag tag-green">Approved</span>
+          {% elif runner.verification_status == 'rejected' %}<span class="tag tag-gray">Rejected</span>
+          {% elif runner.verification_status == 'suspended' %}<span class="tag tag-fire">Suspended</span>
+          {% elif runner.verification_status == 'banned' %}  <span class="tag tag-red">Banned</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'admin_panel:review_runner' runner.id %}" class="btn btn-outline btn-sm">Review →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <span class="empty-icon">✅</span>
+  <div class="empty-title">No {{ status_filter }} applications</div>
+</div>
+{% endif %}
+{% endblock %}

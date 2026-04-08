@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Complete Registration{% endblock %}
+{% block extra_css %}
+<style>
+  .auth-wrap { min-height:calc(100vh - 60px); display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+  .auth-card { width:100%; max-width:440px; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:40px; }
+  .auth-logo { text-align:center; margin-bottom:28px; }
+  .auth-logo-text { font-size:28px; font-weight:800; background:linear-gradient(135deg,#FF4500,#FF8C00,#FFD700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .step-indicator { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:28px; }
+  .step-dot { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:11px; font-weight:700; }
+  .step-dot.done { background:var(--green); color:#fff; }
+  .step-dot.active { background:var(--fire); color:#fff; }
+  .step-line { width:32px; height:1px; background:var(--border); }
+  .verified-badge { display:flex; align-items:center; gap:8px; background:rgba(0,200,150,0.08); border:1px solid rgba(0,200,150,0.25); border-radius:8px; padding:10px 14px; font-family:var(--font-mono); font-size:12px; color:var(--green); margin-bottom:20px; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div style="font-size:32px;">🔥</div>
+      <div class="auth-logo-text">Almost done!</div>
+    </div>
+
+    <div class="step-indicator">
+      <div class="step-dot done">✓</div>
+      <div class="step-line"></div>
+      <div class="step-dot done">✓</div>
+      <div class="step-line"></div>
+      <div class="step-dot active">3</div>
+    </div>
+
+    <div class="verified-badge">
+      ✅ {{ email }} verified
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" class="form-control" value="{{ full_name }}" disabled style="opacity:0.6;">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone (optional)</label>
+        <input type="text" name="phone" class="form-control" placeholder="9876543210">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Hostel Name</label>
+          <input type="text" name="hostel_name" class="form-control" placeholder="Block A">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Room Number</label>
+          <input type="text" name="room_number" class="form-control" placeholder="A-204">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Min 8 characters" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm Password</label>
+        <input type="password" name="confirm_password" class="form-control" placeholder="Repeat password" required>
+      </div>
+      <button type="submit" class="btn btn-fire btn-full">Create Account 🔥</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
