@@ -14,8 +14,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ─────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-this-in-production-hotserve-2024')
 DEBUG=False
-ALLOWED_HOSTS = ['hotserve.onrender.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1,hotserve.onrender.com'
+).split(',')
 
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://hotserve.onrender.com'
+).split(',')
 # ─────────────────────────────────────────────
 # APPLICATIONS
 # ─────────────────────────────────────────────
